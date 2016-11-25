@@ -1,13 +1,13 @@
 package com.zhjh.downloader;
 
-import java.io.File;
-
-import com.koko.downloadplugin.util.PackageUtil;
-
 import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.os.Parcel;
 import android.os.Parcelable;
+
+import com.zhjh.downloader.util.PackageUtil;
+
+import java.io.File;
 
 
 public class DownloadTask implements Parcelable {

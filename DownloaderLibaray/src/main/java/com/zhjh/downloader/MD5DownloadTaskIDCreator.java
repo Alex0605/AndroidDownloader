@@ -1,8 +1,7 @@
 package com.zhjh.downloader;
 
-import com.koko.downloadplugin.util.MD5;
 
-
+import com.zhjh.downloader.util.MD5;
 
 public class MD5DownloadTaskIDCreator implements DownloadTaskIDCreator {
 
