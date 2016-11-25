@@ -4,11 +4,8 @@ import android.os.Environment;
 
 import java.io.File;
 
-/**
- * @author  ZAlex
- */
 public class Env {
 
-    public static String ROOT_DIR = Environment.getExternalStorageDirectory().getPath() + File.separator + "HounyChang";
+    public static String ROOT_DIR = Environment.getExternalStorageDirectory().getPath() + File.separator + "AlexDownloader";
 
 }

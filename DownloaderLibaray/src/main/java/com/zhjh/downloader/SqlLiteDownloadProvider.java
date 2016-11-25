@@ -10,20 +10,18 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author ZAlex
- */
+
 public class SqlLiteDownloadProvider implements DownloadProvider {
 
     private static SqlLiteDownloadProvider instance;
 
-    private DownloadManager manager;
+    private ADownloader manager;
 
     private String DOWNLOAD_TABLE = "tb_download";
 
     private SQLiteDatabase db;
 
-    private SqlLiteDownloadProvider(DownloadManager manager) {
+    private SqlLiteDownloadProvider(ADownloader manager) {
         this.manager = manager;
         File dbFile = new File(manager.getConfig().getDownloadDbPath() + File.separator + "db", "download.db");
         if (dbFile.exists()) {
@@ -44,7 +42,7 @@ public class SqlLiteDownloadProvider implements DownloadProvider {
         createTables();
     }
 
-    public static synchronized SqlLiteDownloadProvider getInstance(DownloadManager manager) {
+    public static synchronized SqlLiteDownloadProvider getInstance(ADownloader manager) {
         if (instance == null) {
             instance = new SqlLiteDownloadProvider(manager);
         }
@@ -182,7 +180,7 @@ public class SqlLiteDownloadProvider implements DownloadProvider {
         task.setDownloadTotalSize(cursor.getLong(cursor.getColumnIndex(DownloadTask.TOTALSIZE)));
         task.setStatus(cursor.getInt(cursor.getColumnIndex(DownloadTask.STATUS)));
         if (task.getStatus() == DownloadTask.STATUS_RUNNING
-                && !DownloadManager.getInstance().isDownloadTaskInOperate(task)) {
+                && !ADownloader.getInstance().isDownloadTaskInOperate(task)) {
             task.setStatus(DownloadTask.STATUS_PAUSED);
         }
         return task;

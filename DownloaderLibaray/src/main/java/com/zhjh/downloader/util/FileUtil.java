@@ -6,7 +6,7 @@ import java.util.UUID;
 /**
  * file utilities
  *
- * @author alex
+ * @author Kevin
  */
 public class FileUtil {
 

@@ -1,8 +1,5 @@
 package com.zhjh.downloader;
 
-import android.text.TextUtils;
-import android.util.Log;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -10,15 +7,15 @@ import java.io.RandomAccessFile;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-/**
- * @author ZAlex
- */
+import android.text.TextUtils;
+import android.util.Log;
+
 public class DownloadOperator implements Runnable {
 
     // 128 kb
     private static final long REFRESH_INTEVAL_SIZE = 128 * 1024;
 
-    private DownloadManager manager;
+    private ADownloader manager;
 
     private DownloadTask task;
 
@@ -30,7 +27,7 @@ public class DownloadOperator implements Runnable {
 
     private String filePath;
 
-    DownloadOperator(DownloadManager manager, DownloadTask task) {
+    DownloadOperator(ADownloader manager, DownloadTask task) {
         this.manager = manager;
         this.task = task;
         this.tryTimes = 0;

@@ -2,9 +2,6 @@ package com.zhjh.downloader;
 
 import java.util.List;
 
-/**
- * @author ZAlex
- */
 public interface DownloadProvider {
 
     public void saveDownloadTask(DownloadTask task);

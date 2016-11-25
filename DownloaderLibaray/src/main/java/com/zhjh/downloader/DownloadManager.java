@@ -1,391 +1,142 @@
 package com.zhjh.downloader;
 
-import android.os.Handler;
+import android.app.Service;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.content.ServiceConnection;
+import android.os.Environment;
+import android.os.IBinder;
 import android.text.TextUtils;
 import android.util.Log;
 
-
 import java.io.File;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
-/**
- * @author ZAlex
- */
 public class DownloadManager {
+	private final String TAG ="DownloadManager";
+    private static DownloadManager mDownloadManager;
+    private static Context             mContext;
 
-    private static final String TAG = "DownloadManager";
-
-    private static DownloadManager instance;
-
-    private DownloadConfig config;
-
-    private HashMap<DownloadTask, DownloadOperator> taskOperators = new HashMap<DownloadTask, DownloadOperator>();
-
-    private HashMap<DownloadTask, DownloadListener> taskListeners = new HashMap<DownloadTask, DownloadListener>();
-
-    private LinkedList<DownloadObserver> taskObservers = new LinkedList<DownloadObserver>();
-
-    private DownloadProvider provider;
-
-    private static Handler handler = new Handler();
-
-    private ExecutorService pool;
+    private DownloadService mDownloadService;
+    private ServiceConnection   mServiceConnection;
 
     private DownloadManager() {
+        initDownloadConfig();
+        mServiceConnection = new ServiceConnection() {
 
-    }
-
-    public static synchronized DownloadManager getInstance() {
-        if (instance == null) {
-            instance = new DownloadManager();
-        }
-
-        return instance;
-    }
-
-    public void init() {
-        config = DownloadConfig.getDefaultDownloadConfig(this);
-        provider = config.getProvider(this);
-        pool = Executors.newFixedThreadPool(config.getMaxDownloadThread());
-    }
-
-    public void init(DownloadConfig config) {
-        if (config == null) {
-            init();
-            return;
-        }
-        this.config = config;
-        provider = config.getProvider(this);
-        pool = Executors.newFixedThreadPool(config.getMaxDownloadThread());
-    }
-
-    public DownloadConfig getConfig() {
-        return config;
-    }
-
-    public void setConfig(DownloadConfig config) {
-        this.config = config;
-    }
-
-    public void addDownloadTask(DownloadTask task) {
-        addDownloadTask(task, null);
-    }
-
-    public void addDownloadTask(DownloadTask task, DownloadListener listener) {
-        if (TextUtils.isEmpty(task.getUrl())) {
-            throw new IllegalArgumentException("task's url cannot be empty");
-        }
-        if (taskOperators.containsKey(task)) {
-            return;
-        }
-        DownloadOperator operator = new DownloadOperator(this, task);
-        taskOperators.put(task, operator);
-        if (listener != null) {
-            taskListeners.put(task, listener);
-        }
-
-        task.setStatus(DownloadTask.STATUS_PENDDING);
-        DownloadTask historyTask = provider.findDownloadTaskById(task.getId());
-        if (historyTask == null) {
-            task.setId(config.getCreator().createId(task));
-            provider.saveDownloadTask(task);
-        } else {
-            provider.updateDownloadTask(task);
-        }
-        pool.submit(operator);
-    }
-
-    public DownloadListener getDownloadListenerForTask(DownloadTask task) {
-        if (task == null) {
-            return null;
-        }
-
-        return taskListeners.get(task);
-    }
-
-    public void updateDownloadTaskListener(DownloadTask task, DownloadListener listener) {
-        Log.v(TAG, "try to updateDownloadTaskListener");
-        if (task == null || !taskOperators.containsKey(task)) {
-            return;
-        }
-
-        Log.v(TAG, "updateDownloadTaskListener");
-        taskListeners.put(task, listener);
-    }
-
-    public void removeDownloadTaskListener(DownloadTask task) {
-        Log.v(TAG, "try to removeDownloadTaskListener");
-        if (task == null || !taskListeners.containsKey(task)) {
-            return;
-        }
-
-        Log.v(TAG, "removeDownloadTaskListener");
-        taskListeners.remove(task);
-    }
-
-    public void pauseDownload(DownloadTask task, DownloadListener listener) {
-        if (task == null)
-            return;
-        Log.v(TAG, "pauseDownload: " + task.getName());
-        DownloadOperator operator = taskOperators.get(task);
-        if (operator != null) {
-            operator.pauseDownload();
-        } else {
-//			addDownloadTask(task, listener);
-//			pauseDownload(task, listener);
-        }
-        onDownloadPaused(task);
-    }
-
-    public void resumeDownload(DownloadTask task, DownloadListener listener) {
-        if (task == null || task.getStatus() == DownloadTask.STATUS_FINISHED)
-            return;
-        Log.v(TAG, "resumeDownload: " + task.getName());
-        DownloadOperator operator = taskOperators.get(task);
-        if (operator != null) {
-            operator.resumeDownload();
-            pool.submit(operator);
-        } else {
-            addDownloadTask(task, listener);
-        }
-        onDownloadResumed(task);
-    }
-
-    public void cancelDownload(final DownloadTask task, final DownloadListener listener) {
-        if (task == null)
-            return;
-        Log.v(TAG, "cancelDownload: " + task.getName());
-        DownloadOperator operator = taskOperators.get(task);
-        if (operator != null) {
-            operator.cancelDownload();
-            handler.post(new Runnable() {
-
-                @Override
-                public void run() {
-                    try {
-                        File file = new File(task.getDownloadSavePath());
-                        if (file.isFile()) {
-                            file.delete();
-                        }
-                    } catch (Exception e) {
-                    }
-                }
-            });
-        } else {
-//			addDownloadTask(task, listener);
-//			cancelDownload(task, listener);
-//			task.setStatus(DownloadTask.STATUS_CANCELED);
-//			provider.deleteDownloadTask(task);
-
-            handler.post(new Runnable() {
-
-                @Override
-                public void run() {
-                    provider.deleteDownloadTask(task);
-                    if (listener != null) {
-                        listener.onDownloadCanceled(task);
-                    }
-                    try {
-                        File file = new File(task.getDownloadSavePath());
-                        if (file.isFile()) {
-                            file.delete();
-                        }
-                    } catch (Exception e) {
-                    }
-                }
-            });
-        }
-        onDownloadCanceled(task);
-    }
-
-    public DownloadTask findDownloadTaskById(String id) {
-        Iterator<DownloadTask> iterator = taskOperators.keySet().iterator();
-        while (iterator.hasNext()) {
-            DownloadTask task = iterator.next();
-            if (task.getId().equals(id)) {
-                Log.v(TAG, "findDownloadTaskByAdId from map");
-                return task;
+            @Override
+            public void onServiceDisconnected(ComponentName name) {
+                // TODO Auto-generated method stub
+                mDownloadService = null;
             }
-        }
 
-        Log.v(TAG, "findDownloadTaskByAdId from provider");
-        return provider.findDownloadTaskById(id);
+            @Override
+            public void onServiceConnected(ComponentName name, IBinder service) {
+                // TODO Auto-generated method stub
+                Log.i(TAG,"onServiceConnected");
+                mDownloadService = ((DownloadService.DownloadBinder) service).getDownloadService();
+            }
+        };
+
+        Intent bindIntent = new Intent(mContext, DownloadService.class);
+        mContext.bindService(bindIntent, mServiceConnection, Service.BIND_AUTO_CREATE);
+    }
+
+    public static void init(Context context) {
+        mContext = context;
+        mDownloadManager = new DownloadManager();
+    }
+
+    public static DownloadManager getInstance() {
+        return mDownloadManager;
+    }
+
+    private void initDownloadConfig() {
+        // custom configuration
+        DownloadConfig.Builder builder = new DownloadConfig.Builder(mContext);
+        String downloadPath;
+        if (Environment.MEDIA_MOUNTED.equals(Environment
+                .getExternalStorageState())) {
+            downloadPath = Environment.getExternalStorageDirectory()
+                    .getAbsolutePath()
+                    + File.separator
+                    + mContext.getPackageName()
+                    + File.separator + "Download";
+        } else {
+            downloadPath = Environment.getDataDirectory().getAbsolutePath()
+                    + File.separator + "data" + File.separator
+                    + mContext.getPackageName() + File.separator + mContext.getPackageName()
+                    + File.separator + "Download";
+        }
+        File downloadFile = new File(downloadPath);
+        if (!downloadFile.isDirectory() && !downloadFile.mkdirs()) {
+//            throw new IllegalAccessError(" cannot create download folder");
+        }
+        builder.setDownloadSavePath(downloadPath);
+        builder.setDownloadDbPath(mContext.getCacheDir().getPath());
+        builder.setMaxDownloadThread(24);
+        builder.setDownloadTaskIDCreator(new IDCreate());
+        ADownloader.getInstance().init(builder.build());
+    }
+
+    public void startDownload(String packagename,int type, String url) {
+        if (TextUtils.isEmpty(packagename) || TextUtils.isEmpty(url)) {
+            Log.e(TAG,"packagename or downloadlink empty");
+            return;
+        }
+        getDownloadService().startDownload(packagename,type, url);
+    }
+
+    public void pauseDownload(String packagename) {
+        getDownloadService().pauseDownload(packagename);
+    }
+
+    /**
+     * pause all download task
+     */
+    public void pauseAll(){
+        if(getDownloadService() != null)
+            getDownloadService().pauseAll();
+    }
+
+    public void resumeDownload(String packagename) {
+        getDownloadService().resumeDownload(packagename);
+    }
+
+    public void cancelDownload(String packagename) {
+        getDownloadService().cancelDownload(packagename);
+    }
+
+    public DownloadTask getDownloadTask(String packagename) {
+        return ADownloader.getInstance().findDownloadTaskById(packagename);
     }
 
     public List<DownloadTask> getAllDownloadTask() {
-    	if(provider!=null){
-    		return provider.getAllDownloadTask();
-    	}else{
-    		return null;
-    	}
+        return ADownloader.getInstance().getAllDownloadTask();
     }
 
-    public void registerDownloadObserver(DownloadObserver observer) {
-        if (observer == null) {
-            return;
+    public int getUnfinishedTaskCount() {
+        List<DownloadTask> tasks = ADownloader.getInstance().getAllDownloadTask();
+        int unfinishedCount = 0;
+        for (int i = 0; i < tasks.size(); i++) {
+            if (tasks.get(i).getStatus() != DownloadTask.STATUS_FINISHED)
+                unfinishedCount++;
         }
-        taskObservers.add(observer);
+        return unfinishedCount;
     }
 
-    public void unregisterDownloadObserver(DownloadObserver observer) {
-        if (observer == null) {
-            return;
+    public int getRunningTaskCount() {
+        List<DownloadTask> tasks = ADownloader.getInstance().getAllDownloadTask();
+        int runningCount = 0;
+        for (int i = 0; i < tasks.size(); i++) {
+            if (tasks.get(i).getStatus() == DownloadTask.STATUS_RUNNING)
+                runningCount++;
         }
-        taskObservers.remove(observer);
+        return runningCount;
     }
 
-    public void close() {
-        pool.shutdownNow();
+    public DownloadService getDownloadService() {
+        return mDownloadService;
     }
-
-    public void notifyDownloadTaskStatusChanged(final DownloadTask task) {
-        handler.post(new Runnable() {
-
-            public void run() {
-                for (DownloadObserver observer : taskObservers) {
-                    observer.onDownloadTaskStatusChanged(task);
-                }
-            }
-        });
-    }
-
-    void updateDownloadTask(final DownloadTask task, final long finishedSize, final long trafficSpeed) {
-        task.setStatus(DownloadTask.STATUS_RUNNING);
-        final DownloadListener listener = taskListeners.get(task);
-        handler.post(new Runnable() {
-
-            @Override
-            public void run() {
-                provider.updateDownloadTask(task);
-                if (listener != null) {
-                    listener.onDownloadUpdated(task, finishedSize, trafficSpeed);
-                }
-            }
-
-        });
-    }
-
-    void onDownloadStarted(final DownloadTask task) {
-        task.setStatus(DownloadTask.STATUS_RUNNING);
-        final DownloadListener listener = taskListeners.get(task);
-        handler.post(new Runnable() {
-
-            @Override
-            public void run() {
-                provider.updateDownloadTask(task);
-                if (listener != null) {
-                    listener.onDownloadStart(task);
-                }
-            }
-        });
-    }
-
-
-    void onDownloadPaused(final DownloadTask task) {
-        task.setStatus(DownloadTask.STATUS_PAUSED);
-        final DownloadListener listener = taskListeners.get(task);
-        handler.post(new Runnable() {
-
-            @Override
-            public void run() {
-                provider.updateDownloadTask(task);
-                if (listener != null) {
-                    listener.onDownloadPaused(task);
-                }
-            }
-        });
-    }
-
-    void onDownloadResumed(final DownloadTask task) {
-        task.setStatus(DownloadTask.STATUS_RUNNING);
-        final DownloadListener listener = taskListeners.get(task);
-        handler.post(new Runnable() {
-
-            @Override
-            public void run() {
-                provider.updateDownloadTask(task);
-                if (listener != null) {
-                    listener.onDownloadResumed(task);
-                }
-            }
-        });
-    }
-
-    void onDownloadCanceled(final DownloadTask task) {
-        task.setStatus(DownloadTask.STATUS_CANCELED);
-        final DownloadListener listener = taskListeners.get(task);
-        removeTask(task);
-        handler.post(new Runnable() {
-
-            @Override
-            public void run() {
-                provider.deleteDownloadTask(task);
-                if (listener != null) {
-                    listener.onDownloadCanceled(task);
-                }
-
-            }
-        });
-    }
-
-    void onDownloadSuccessed(final DownloadTask task) {
-        task.setStatus(DownloadTask.STATUS_FINISHED);
-        final DownloadListener listener = taskListeners.get(task);
-        removeTask(task);
-        handler.post(new Runnable() {
-
-            @Override
-            public void run() {
-                provider.updateDownloadTask(task);
-                if (listener != null) {
-                    listener.onDownloadSuccessed(task);
-                }
-            }
-
-        });
-    }
-
-    void onDownloadFailed(final DownloadTask task) {
-        task.setStatus(DownloadTask.STATUS_ERROR);
-        final DownloadListener listener = taskListeners.get(task);
-        removeTask(task);
-        handler.post(new Runnable() {
-
-            @Override
-            public void run() {
-                provider.updateDownloadTask(task);
-                if (listener != null) {
-                    listener.onDownloadFailed(task);
-                }
-            }
-        });
-    }
-
-    void onDownloadRetry(final DownloadTask task) {
-        final DownloadListener listener = taskListeners.get(task);
-        handler.post(new Runnable() {
-
-            @Override
-            public void run() {
-                if (listener != null) {
-                    listener.onDownloadRetry(task);
-                }
-            }
-        });
-    }
-
-    private void removeTask(DownloadTask task) {
-        taskOperators.remove(task);
-        taskListeners.remove(task);
-    }
-
-    public boolean isDownloadTaskInOperate(DownloadTask task) {
-        return taskOperators.containsKey(task);
-    }
-
 }

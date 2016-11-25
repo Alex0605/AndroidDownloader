@@ -4,9 +4,6 @@ import android.content.Context;
 
 import java.io.File;
 
-/**
- * @author ZAlex
- */
 public class DownloadConfig {
 
     private String downloadDbPath;
@@ -44,7 +41,7 @@ public class DownloadConfig {
         return retryTime;
     }
 
-    public DownloadProvider getProvider(DownloadManager manager) {
+    public DownloadProvider getProvider(ADownloader manager) {
         if (provider == null) {
             provider = SqlLiteDownloadProvider.getInstance(manager);
         }
@@ -55,7 +52,7 @@ public class DownloadConfig {
         return creator;
     }
 
-    public static DownloadConfig getDefaultDownloadConfig(DownloadManager manager) {
+    public static DownloadConfig getDefaultDownloadConfig(ADownloader manager) {
         DownloadConfig config = new DownloadConfig();
         config.provider = SqlLiteDownloadProvider.getInstance(manager);
         return config;

@@ -5,7 +5,7 @@ import java.util.Locale;
 /**
  * MD5
  *
- * @author ZAlex
+ * @author Kevin
  */
 public class MD5 {
 
