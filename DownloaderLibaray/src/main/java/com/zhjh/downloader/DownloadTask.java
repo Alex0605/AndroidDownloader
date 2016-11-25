@@ -9,7 +9,9 @@ import com.zhjh.downloader.util.PackageUtil;
 
 import java.io.File;
 
-
+/**
+ * @author ZAlex
+ */
 public class DownloadTask implements Parcelable {
 
     public static final String ID = "_id";

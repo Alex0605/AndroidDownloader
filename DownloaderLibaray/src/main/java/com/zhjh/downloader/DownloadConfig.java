@@ -4,6 +4,9 @@ import android.content.Context;
 
 import java.io.File;
 
+/**
+ * @author ZAlex
+ */
 public class DownloadConfig {
 
     private String downloadDbPath;

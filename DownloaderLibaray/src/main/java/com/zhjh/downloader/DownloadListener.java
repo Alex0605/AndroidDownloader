@@ -1,5 +1,8 @@
 package com.zhjh.downloader;
 
+/**
+ * @author ZAlex
+ */
 public interface DownloadListener {
 
     public void onDownloadStart(DownloadTask task);

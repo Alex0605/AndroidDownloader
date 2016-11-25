@@ -13,6 +13,9 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+/**
+ * @author ZAlex
+ */
 public class DownloadManager {
 
     private static final String TAG = "DownloadManager";

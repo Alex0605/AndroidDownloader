@@ -10,7 +10,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-
+/**
+ * @author ZAlex
+ */
 public class SqlLiteDownloadProvider implements DownloadProvider {
 
     private static SqlLiteDownloadProvider instance;

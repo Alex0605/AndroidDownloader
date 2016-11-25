@@ -3,6 +3,9 @@ package com.zhjh.downloader;
 
 import com.zhjh.downloader.util.MD5;
 
+/**
+ * @author ZAlex
+ */
 public class MD5DownloadTaskIDCreator implements DownloadTaskIDCreator {
 
     @Override

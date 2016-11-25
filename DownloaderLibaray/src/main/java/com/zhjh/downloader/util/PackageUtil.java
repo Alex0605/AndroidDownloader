@@ -5,7 +5,9 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 
-
+/**
+ * @author ZAlex
+ */
 public class PackageUtil {	
 	
 	public static PackageInfo getPackageInfoFromFilePath(Context context,String filePath) {

@@ -10,6 +10,9 @@ import java.io.RandomAccessFile;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
+/**
+ * @author ZAlex
+ */
 public class DownloadOperator implements Runnable {
 
     // 128 kb
