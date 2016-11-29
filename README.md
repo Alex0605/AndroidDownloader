@@ -1,7 +1,9 @@
 介绍
 -
-    AndroidDownloader 是一个下载续下载工具
-1.如何使用在你的项目Gradle 
+    AndroidDownloader 是一个下载续下载工具
+效果图
+------
+如何使用在你的项目Gradle 
 ----------------------
 	在工程中添加
 	allprojects {
