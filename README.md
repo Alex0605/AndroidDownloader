@@ -3,6 +3,7 @@
     AndroidDownloader 是一个下载续下载工具
 效果图
 ------
+![](https://github.com/Alex0605/AndroidDownloader/blob/master/screenshot/screen.gif)
 如何使用在你的项目Gradle 
 ----------------------
 	在工程中添加
