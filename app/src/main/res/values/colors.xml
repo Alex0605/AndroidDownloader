@@ -21,4 +21,7 @@
     <color name="holo_orange_light">#ffffbb33</color>
     <color name="holo_red_light">#ffff4444</color>
     <!-- lib pb button -->
+
+    <color name="icon_progress_mask_color">#00000000</color>
+    <color name="icon_progress_mask_bg_color">#CC233333</color>
 </resources>

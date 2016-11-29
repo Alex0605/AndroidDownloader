@@ -13,4 +13,13 @@
         <attr name="pb_colorNormal" format="color" />
         <attr name="pb_cornerRadius" format="dimension" />
     </declare-styleable>
+
+    <declare-styleable name="ProgressImageView">
+        <attr name="pi_progress" format="integer"/>
+        <attr name="pi_mask_color" format="color"/>
+        <attr name="pi_stroke" format="dimension"/>
+        <attr name="pi_radius" format="dimension"/>
+        <attr name="pi_force_square" format="boolean"/>
+    </declare-styleable>
+
 </resources>

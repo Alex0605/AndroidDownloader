@@ -20,6 +20,15 @@
         custom:pb_colorPressed="@color/colorTitle"
         custom:pb_colorEmpty="@color/color_light_gray"/>
 
-
+    <com.zhjh.download.test.ProgressImageView
+        android:id="@+id/progress_img"
+        android:layout_width="120dp"
+        android:layout_height="120dp"
+        android:scaleType="centerCrop"
+        android:layout_centerInParent="true"
+        custom:pi_mask_color="@color/icon_progress_mask_color"
+        custom:pi_progress="0"
+        custom:pi_radius="56dp"
+        custom:pi_stroke="5dp"/>
 
 </RelativeLayout>

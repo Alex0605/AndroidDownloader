@@ -9,6 +9,7 @@ import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.pm.ResolveInfo;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.content.ContextCompat;
 import android.view.View;
 
 import com.zhjh.downloader.BroadcastManager;
@@ -29,6 +30,7 @@ public class MainActivity extends FragmentActivity {
 
 
 	SubmitProcessButton  spbtnDownload;
+	ProgressImageView progressImageView;
 
 	private BroadcastManager.KokoDownloadBroadcastReceiver mHallDownloadBroadcastReceiver;
 	private String url = "http://acj.pc6.com/pc6_soure/2016-9/com.walrushz.logistics_6.apk";
@@ -41,6 +43,7 @@ public class MainActivity extends FragmentActivity {
 		super.onCreate(onSavedInstanceState);
 		setContentView(R.layout.activity_main);
 		spbtnDownload = (SubmitProcessButton)findViewById(R.id.spbtn_download);
+		progressImageView =(ProgressImageView)findViewById(R.id.progress_img);
 		appBean = new AppBean();
 		appBean.setDownloadUrl(url);
 		appBean.setAppId("1001");
@@ -65,11 +68,11 @@ public class MainActivity extends FragmentActivity {
 	}
 
 	private void initDownloadState() {
-		setSubmitProcessButton(this, spbtnDownload, appBean,
+		setSubmitProcessButton(this, spbtnDownload, progressImageView,appBean,
 							  DownloadManager.getInstance().getDownloadTask(appBean.getGamePackageName()));
 	}
 
-	private void setSubmitProcessButton(final Context context, SubmitProcessButton button, final AppBean appBean, final DownloadTask task) {
+	private void setSubmitProcessButton(final Context context, SubmitProcessButton button,ProgressImageView imageView, final AppBean appBean, final DownloadTask task) {
 
 		boolean isInstalled = PackageUtil.isApkInstalled(this, appBean.gamePackageName);
 		boolean needUpdate = isInstalled ?
@@ -77,8 +80,12 @@ public class MainActivity extends FragmentActivity {
 							 false;
 		int operateState = DownloadTask.getOperateState(MainActivity.this, task, appBean.getGameVersionCode(),
 														appBean.getGamePackageName());
+		progressImageView.setImageResource(R.mipmap.pic_1);
 		if (isInstalled && !needUpdate) {
 			button.setProgress(100);
+
+			updateProgress(progressImageView, 100);
+
 			button.setText("启动");
 			button.setOnClickListener(new View.OnClickListener() {
 
@@ -133,16 +140,22 @@ public class MainActivity extends FragmentActivity {
 				if (packageInfo != null && appBean.gamePackageName.equals(packageInfo.packageName)) {
 					button.setText("安装");
 					button.setProgress(100);
+
+					updateProgress(progressImageView, 100);
+
 					button.setOnClickListener(new View.OnClickListener() {
 						@Override
 						public void onClick(View v) {
-							PackageUtil.installApk(getApplicationContext(), PackageUtil.getAssetFile(MainActivity.this,"buildin.apk").getPath(),
+							PackageUtil.installApk(getApplicationContext(), PackageUtil.getAssetFile(MainActivity.this, "buildin1.apk").getPath(),
 													packageInfo.packageName);
 						}
 					});
 					return;
 				}
 				button.setProgress(0);
+
+				updateProgress(progressImageView, 0);
+
 				button.setText("开始下载");
 				button.setOnClickListener(new View.OnClickListener() {
 
@@ -154,6 +167,9 @@ public class MainActivity extends FragmentActivity {
 			}
 			if (operateState == DownloadTask.OPERATE_UPGRADE) {
 				button.setProgress(0);
+
+				updateProgress(progressImageView, 0);
+
 				button.setText("更新");
 				button.setOnClickListener(new View.OnClickListener() {
 
@@ -169,10 +185,13 @@ public class MainActivity extends FragmentActivity {
 				if (packageInfo != null && appBean.gamePackageName.equals(packageInfo.packageName)) {
 					button.setText("安装");
 					button.setProgress(100);
+
+					updateProgress(progressImageView, 100);
+
 					button.setOnClickListener(new View.OnClickListener() {
 						@Override
 						public void onClick(View v) {
-							PackageUtil.installApk(getApplicationContext(), PackageUtil.getAssetFile(MainActivity.this,"buildin.apk").getPath(),
+							PackageUtil.installApk(getApplicationContext(), PackageUtil.getAssetFile(MainActivity.this, "buildin1.apk").getPath(),
 													packageInfo.packageName);
 						}
 					});
@@ -181,6 +200,9 @@ public class MainActivity extends FragmentActivity {
 				double progress = 100.0 * task.getDownloadFinishedSize() / task.getDownloadTotalSize();
 				button.setProgress((int) progress);
 				button.setText("已下载" + String.format("(%.1f%%)", progress));
+
+				updateProgress(progressImageView, (int)progress);
+
 				button.setOnClickListener(new View.OnClickListener() {
 
 					@Override
@@ -194,10 +216,13 @@ public class MainActivity extends FragmentActivity {
 				if (packageInfo != null && appBean.gamePackageName.equals(packageInfo.packageName)) {
 					button.setText("安装");
 					button.setProgress(100);
+
+					updateProgress(progressImageView, 100);
+
 					button.setOnClickListener(new View.OnClickListener() {
 						@Override
 						public void onClick(View v) {
-							PackageUtil.installApk(getApplicationContext(), PackageUtil.getAssetFile(MainActivity.this,"buildin.apk").getPath(),
+							PackageUtil.installApk(getApplicationContext(), PackageUtil.getAssetFile(MainActivity.this, "buildin1.apk").getPath(),
 													packageInfo.packageName);
 						}
 					});
@@ -206,6 +231,8 @@ public class MainActivity extends FragmentActivity {
 				double progress = 100.0 * task.getDownloadFinishedSize() / task.getDownloadTotalSize();
 				button.setProgress((int) progress);
 				button.setText("继续" + String.format("(%.1f%%)", progress));
+				updateProgress(progressImageView, (int)progress);
+
 				button.setOnClickListener(new View.OnClickListener() {
 
 					@Override
@@ -218,6 +245,7 @@ public class MainActivity extends FragmentActivity {
 			if (operateState == DownloadTask.OPERATE_COMPLETE) {
 				button.setText("安装");
 				button.setProgress(100);
+				updateProgress(progressImageView, 100);
 				button.setOnClickListener(new View.OnClickListener() {
 
 					@Override
@@ -245,56 +273,56 @@ public class MainActivity extends FragmentActivity {
 				@Override
 				public void onDownloadUpdated(DownloadTask task) {
 					if (task.getId().equals(appBean.gamePackageName)) {
-						setSubmitProcessButton(getApplicationContext(), spbtnDownload, appBean, task);
+						setSubmitProcessButton(getApplicationContext(), spbtnDownload,progressImageView, appBean, task);
 					}
 				}
 
 				@Override
 				public void onDownloadSuccessed(DownloadTask task) {
 					if (task.getId().equals(appBean.gamePackageName)) {
-						setSubmitProcessButton(getApplicationContext(), spbtnDownload, appBean, task);
+						setSubmitProcessButton(getApplicationContext(), spbtnDownload,progressImageView, appBean, task);
 					}
 				}
 
 				@Override
 				public void onDownloadStart(DownloadTask task) {
 					if (task.getId().equals(appBean.gamePackageName)) {
-						setSubmitProcessButton(getApplicationContext(), spbtnDownload, appBean, task);
+						setSubmitProcessButton(getApplicationContext(), spbtnDownload,progressImageView, appBean, task);
 					}
 				}
 
 				@Override
 				public void onDownloadRetry(DownloadTask task) {
 					if (task.getId().equals(appBean.gamePackageName)) {
-						setSubmitProcessButton(getApplicationContext(), spbtnDownload, appBean, task);
+						setSubmitProcessButton(getApplicationContext(), spbtnDownload,progressImageView, appBean, task);
 					}
 				}
 
 				@Override
 				public void onDownloadResumed(DownloadTask task) {
 					if (task.getId().equals(appBean.gamePackageName)) {
-						setSubmitProcessButton(getApplicationContext(), spbtnDownload, appBean, task);
+						setSubmitProcessButton(getApplicationContext(), spbtnDownload,progressImageView, appBean, task);
 					}
 				}
 
 				@Override
 				public void onDownloadPaused(DownloadTask task) {
 					if (task.getId().equals(appBean.gamePackageName)) {
-						setSubmitProcessButton(getApplicationContext(), spbtnDownload, appBean, task);
+						setSubmitProcessButton(getApplicationContext(), spbtnDownload,progressImageView, appBean, task);
 					}
 				}
 
 				@Override
 				public void onDownloadFailed(DownloadTask task) {
 					if (task.getId().equals(appBean.gamePackageName)) {
-						setSubmitProcessButton(getApplicationContext(), spbtnDownload, appBean, task);
+						setSubmitProcessButton(getApplicationContext(), spbtnDownload,progressImageView, appBean, task);
 					}
 				}
 
 				@Override
 				public void onDownloadCanceled(DownloadTask task) {
 					if (task.getId().equals(appBean.gamePackageName)) {
-						setSubmitProcessButton(getApplicationContext(), spbtnDownload, appBean, task);
+						setSubmitProcessButton(getApplicationContext(), spbtnDownload,progressImageView, appBean, task);
 					}
 				}
 
@@ -302,7 +330,7 @@ public class MainActivity extends FragmentActivity {
 				public void onApkInstallOrUninstall(String packagename) {
 					try {
 						if (packagename.equals(appBean.gamePackageName)) {
-							setSubmitProcessButton(getApplicationContext(), spbtnDownload, appBean, null);
+							setSubmitProcessButton(getApplicationContext(), spbtnDownload,progressImageView, appBean, null);
 						}
 					} catch (Exception e) {
 					}
@@ -311,6 +339,16 @@ public class MainActivity extends FragmentActivity {
 
 			});
 		BroadcastManager.getInstance().registerDownloadBroadcastReceiver(mHallDownloadBroadcastReceiver);
+	}
+
+	private void updateProgress(ProgressImageView mProgressImageView, int progress){
+
+		if(progress<1){
+			mProgressImageView.setMaskColor(ContextCompat.getColor(this, R.color.icon_progress_mask_color));
+		}else{
+			mProgressImageView.setMaskColor(ContextCompat.getColor(this, R.color.icon_progress_mask_bg_color));
+		}
+		mProgressImageView.setProgress(progress,progress+"%");
 	}
 
 }
